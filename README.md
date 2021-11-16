@@ -4,6 +4,6 @@
 Install via NPM:
 
 ```bash
-npm install @MaquestiauxDevs/nodejs-eu-login
+npm install --save nodejs-eu-login
 
 ```
