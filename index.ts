@@ -222,8 +222,6 @@ export class EuLogin {
             }
         }
 
-        // TODO Add a redirect Logout params
-
         if (EuLogin._logoutRedirectUrl) {
             return res.redirect(EuLogin._logoutRedirectUrl);
         }
