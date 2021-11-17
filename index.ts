@@ -32,6 +32,7 @@ interface IConfig {
     casUrl?: string;
     validateUri?: EValidateUri;
     serviceUrl: string;
+    logoutRedirectUrl?: string;
     casVersion?: string;
     sessionName?: string;
     sessionInfo?: string;
@@ -60,6 +61,7 @@ export class EuLogin {
     private static _sessionName: string;
     private static _serviceUrl: string;
     private static _casUrl: string;
+    private static _logoutRedirectUrl: string;
 
     constructor(private config: IConfig
     ) {
@@ -78,7 +80,9 @@ export class EuLogin {
         this.setDevModeInfo(config.devModeInfo !== undefined ? config.devModeInfo : {});
         this.setAssuranceLevel(config.assuranceLevel !== undefined ? config.assuranceLevel : EAssuranceLevel.TOP);
 
-        this.setValidateUri((config.validateUri !== undefined) && config.validateUri.length > 0 ? config.validateUri : EValidateUri.SERVICEVALIDATE);
+        this.setValidateUri((config.validateUri !== undefined && config.validateUri.length > 0) ? config.validateUri : EValidateUri.SERVICEVALIDATE);
+
+        this.setLogoutRedirectUrl((config.logoutRedirectUrl !== undefined && config.logoutRedirectUrl.length > 0) ? config.logoutRedirectUrl : '');
 
         const parsedCasUrl: url.UrlWithStringQuery = url.parse(EuLogin._casUrl);
         this.setHttpClient(https);
@@ -145,7 +149,7 @@ export class EuLogin {
             port: this._casPort
         }
         const reqQuery: any = req.query;
-        if (['1.0', '2.0', '3.0'].indexOf(this._casVersion) >= 0) {
+        if (['3.0'].indexOf(this._casVersion) >= 0) {
             requestOptions.method = 'GET';
             requestOptions.path = url.format({
                 pathname: this._casPath + this._validateUri,
@@ -204,7 +208,7 @@ export class EuLogin {
         if (EuLogin._destroySession) {
             req.session.destroy((err) => {
                 if (err) {
-                    res.status(401).json({ "message": "Request error with CAS" })
+                    return res.status(401).json({ "message": "Request error with CAS" });
                 }
             });
         }
@@ -218,6 +222,11 @@ export class EuLogin {
             }
         }
 
+        // TODO Add a redirect Logout params
+
+        if (EuLogin._logoutRedirectUrl) {
+            return res.redirect(EuLogin._logoutRedirectUrl);
+        }
         // Redirect the client to the CAS logout.
         res.redirect(EuLogin._casUrl + '/logout');
     };
@@ -284,6 +293,10 @@ export class EuLogin {
 
     setCasPath(casPath: string) {
         EuLogin._casPath = casPath;
+    }
+
+    setLogoutRedirectUrl(logoutRedirectUrl: string) {
+        EuLogin._logoutRedirectUrl = logoutRedirectUrl;
     }
 
     bounce(req: Request, res: Response, next: NextFunction) {
